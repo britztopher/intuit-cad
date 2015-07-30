@@ -10,32 +10,44 @@ var q = require('q');
 //member vars
 var SAML_URL = 'https://oauth.intuit.com/oauth/v1/get_access_token_by_saml';
 var timeFormat = 'YYYY-MM-DD LZ';
+var OAUTH_TOKEN_TIMEOUT = 3600000;
 
-var IntuitCAD = function(issuerId, customerId, consumerKey, privateKeyPath){
-  this.issuerId = issuerId;
-  this.customerId = customerId;
-  this.consumerKey = consumerKey;
-  this.privateKey = fs.readFileSync(__dirname + privateKeyPath, 'utf-8');
-  this.oauthInfo = {}
+var IntuitAuth = function(authCreds){
+  this.authCreds = authCreds;
+  this.authCreds.privateKey = fs.readFileSync(authCreds.privateKeyPath, 'utf-8');
+  this.oauthInfo = {};
+  this.tokenTimeoutStart;
+  this.tokenTimeoutEnd;
+
+  //TODO - need to add this to config object
+  this.writeAssertionFile = false;
 };
 
-IntuitCAD.prototype = {
+IntuitAuth.prototype = {
 
   authenticate: function(){
 
     var deferred = q.defer();
 
-    var assertionSigned64 = this.createSamlAssertion();
+      var assertionSigned64 = this.createSamlAssertion();
 
-    this.makeSamlRequest(assertionSigned64)
-      .then(function(oauthObj){
-        console.log('oauth Info: ', oauthObj);
-        this.oauthInfo = oauthObj;
-      });
+      this.makeSamlRequest(assertionSigned64)
+        .then(function(oauthObj){
+          this.oauthInfo = oauthObj;
+          this.tokenTimeoutEnd = moment(Date.now()).add(60, 'minutes');
 
-    this.writeAssertionFile = false;
+          //if the timeout in milliseconds
+          if(Date.now() < this.tokenTimeoutEnd && this.oauthInfo){
 
-    return deferred.promise();
+          }
+
+          deferred.resolve(oauthObj);
+        },
+        function(reason){
+          console.log('could not make saml request because: ', reason);
+        });
+
+    return deferred.promise;
   },
   createSamlAssertion: function(){
 
@@ -112,8 +124,8 @@ IntuitCAD.prototype = {
       notBefore: notBefore,
       notOnOrAfter: notOnOrAfter,
       id: id,
-      issuerId: this.issuerId,
-      customerId: this.customerId
+      issuerId: this.authCreds.issuerId,
+      customerId: this.authCreds.customerId
     };
 
     //render swig plain assertion message with the values filled in
@@ -153,13 +165,14 @@ IntuitCAD.prototype = {
     completeAssertion = new Buffer(completeAssertion).toString('base64');
 
 
+    console.log('finished saml assertion');
     return completeAssertion;
   },
   getAssertionSha: function(assertion){
     //create sha1 hash for assertion then base64 it
     return crypto.createHash('sha1').update(assertion).digest('base64').trim();
   },
-  makeSamlRequest: function(message){
+  makeSamlRequest: function(message, callback){
 
     var deferred = q.defer();
 
@@ -169,30 +182,29 @@ IntuitCAD.prototype = {
     var options = {
       url: SAML_URL,
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
         'Content-Language': 'en-US',
-        'Authorization': 'OAuth oauth_consumer_key="' + this.consumerKey + '"'
+        'Authorization': 'OAuth oauth_consumer_key="' + this.authCreds.consumerKey + '"'
       },
       form: {saml_assertion: message}
     };
 
     //make the post request
     request.post(options, function(error, response, body){
+      if(error){
+        console.log('could not send post request with assertion message because: \n', error);
+      }
+      console.log('made saml request', body);
+      var oauth = {};
+      //split up the body
+      var splitBodyArr = body.split('&');
+      //populate oauth object
+      oauth.tokenSecret = splitBodyArr[0].split('=')[1];
+      oauth.token = splitBodyArr[1].split('=')[1];
 
-        if(error){
-          deferred.reject('could not send post request with assertion message because: \n', error);
-        }
-
-        //split up the body
-        var splitBodyArr = body.split('&');
-        //populate oauth object
-        oauth.tokenSecret = splitBodyArr[0];
-        oauth.token = splitBodyArr[1];
-
-        //resolve with oauth infomation from intuit
-        deferred.resolve(oauth);
-
-      });
+      //resolve with oauth infomation from
+      deferred.resolve(oauth);
+    });
 
     return deferred.promise;
 
@@ -202,13 +214,13 @@ IntuitCAD.prototype = {
     //sign the signed info xml with the private key
     var signer = crypto.createSign('RSA-SHA1');
     signer.update(signedInfoXml);
-    var signatureValue = signer.sign(this.privateKey, 'base64').replace(/\n/, '');
+    var signatureValue = signer.sign(this.authCreds.privateKey, 'base64').replace(/\n/, '');
 
     return signatureValue;
   }
 };
 
 
-module.exports = IntuitCAD;
+module.exports = IntuitAuth;
 
 
