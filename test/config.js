@@ -1,5 +1,3 @@
-var path = require('path');
-
 var config ={
   issuerId: 'issuerId',
   consumerKey:'consumerKey',

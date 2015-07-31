@@ -87,11 +87,26 @@ Client.prototype = {
     return deferred.promise;
 
   },
-  get: function(url){
+  getAccountTransactions: function(accountId, txnStartDate, txnEndDate){
+
+    var deferred = q.defer(),
+        txnDates = {txnStartDate: txnStartDate, txnEndDate: txnEndDate};
+
+    this.get('/accounts/'+accountId+'/transactions/', txnDates)
+      .then(function(transactions){
+        deferred.resolve(transactions);
+      },
+      function(reason){
+        deferred.reject(reason);
+      })
+
+    return deferred.promise;
+  },
+  get: function(url, queryString){
 
     var deferred = q.defer();
 
-    var options = {baseUrl: BASE_URL, method: 'GET', url: url,  headers: {'Content-Type': 'application/json'}};
+    var options = {baseUrl: BASE_URL, smethod: 'GET', url: url, qs: queryString, headers: {'Content-Type': 'application/json'}};
 
     this.makeRequest(options)
       .then(function(response){
@@ -148,7 +163,7 @@ Client.prototype = {
         options.oauth = oauth;
         options.json = true;
 
-        //console.log('request options: ', options);
+        console.log('request options: ', options);
 
         request(options, function(err, r, response){
 
