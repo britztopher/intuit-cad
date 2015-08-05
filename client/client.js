@@ -43,7 +43,6 @@ Client.prototype = {
     var deferred = q.defer();
 
     var creds = this.buildCredentials(username, password);
-    console.log('creds: ', creds);
 
     this.post('/institutions/' + institutionId + '/logins', creds)
       .then(function(response){
@@ -70,13 +69,24 @@ Client.prototype = {
   },
 
   getLoginAccounts: function(institutionLoginId){
-    console.log('not implementing just yet');
+
+    var deferred = q.defer();
+
+    this.get('/logins/' + institutionLoginId + '/accounts')
+      .then(function(loginAccounts){
+        deferred.resolve(loginAccounts);
+      },
+      function(reason){
+        deferred.reject(reason);
+      })
+
+    return deferred.promise;
   },
   getAccount: function(accountId){
 
     var deferred = q.defer();
 
-    this.get('/accounts/'+accountId)
+    this.get('/accounts/' + accountId)
       .then(function(accountDetail){
         deferred.resolve(accountDetail);
       },
@@ -90,9 +100,9 @@ Client.prototype = {
   getAccountTransactions: function(accountId, txnStartDate, txnEndDate){
 
     var deferred = q.defer(),
-        txnDates = {txnStartDate: txnStartDate, txnEndDate: txnEndDate};
+      txnDates = {txnStartDate: txnStartDate, txnEndDate: txnEndDate};
 
-    this.get('/accounts/'+accountId+'/transactions/', txnDates)
+    this.get('/accounts/' + accountId + '/transactions/', txnDates)
       .then(function(transactions){
         deferred.resolve(transactions);
       },
@@ -102,11 +112,55 @@ Client.prototype = {
 
     return deferred.promise;
   },
+  updateInstitutionLogin: function(institutionalLoginId, username, newPassword){
+
+    var deferred = q.defer();
+
+    var newCreds = this.buildCredentials(username, newPassword);
+
+    this.put('/logins/'+institutionalLoginId+'?refresh=true', newCreds)
+      .then(function(wasChanged){
+        deferred.resolve(wasChanged);
+      },
+      function(reason){
+        deferred.reject(reason);
+      });
+
+    return deferred.promise;
+  },
+  updateAccountType: function(accountId, accountType){
+
+    var deferred = q.defer();
+
+
+
+    return deferred.promise;
+
+  },
+
+  deleteAccount: function(accountId){
+
+    var deferred = q.defer();
+    this.delete('/accounts/'+accountId)
+      .then(function(wasDeleted){
+        deferred.resolve('the account '+accountId+'was successfully deleted.');
+      },
+      function(reason){
+        deferred.reject('the account '+accountId+'was not deleted successfully because: ', reason);
+      });
+
+    return deferred.promise;
+  },
   get: function(url, queryString){
 
     var deferred = q.defer();
 
-    var options = {baseUrl: BASE_URL, smethod: 'GET', url: url, qs: queryString, headers: {'Content-Type': 'application/json'}};
+    var options = {
+      method: 'GET',
+      url: url,
+      qs: queryString,
+      headers: {'Content-Type': 'application/json'}
+    };
 
     this.makeRequest(options)
       .then(function(response){
@@ -125,13 +179,10 @@ Client.prototype = {
     var deferred = q.defer();
 
     var options = {};
-
-    options.baseUrl = BASE_URL;
     options.url = url;
     options.headers = {'Content-Type': 'application/json'};
     options.body = creds;
     options.method = 'POST';
-
 
     this.makeRequest(options)
       .then(function(response){
@@ -144,6 +195,45 @@ Client.prototype = {
     return deferred.promise;
   },
 
+  put: function(url, body){
+
+    var deferred = q.defer();
+
+    var options = {};
+    options.url = url;
+    options.headers = {'Content-Type': 'application/json'};
+    options.body = body;
+    options.method = 'PUT';
+
+    this.makeRequest(options)
+      .then(function(response){
+        deferred.resolve(response);
+      },
+      function(reason){
+        deferred.reject(reason);
+      });
+
+    return deferred.promise;
+
+  },
+  delete: function(url){
+
+    var deferred = q.defer();
+    var options = {
+      url: url,
+      method: 'DELETE'
+    };
+
+    this.makeRequest(options)
+      .then(function(){
+        deferred.resolve(true);
+      },
+      function(reason){
+        deferred.reject(reason);
+      });
+
+    return deferred.promise;
+  },
   makeRequest: function(options){
 
     //console.log('in make request');
@@ -159,11 +249,13 @@ Client.prototype = {
           consumer_secret: authCreds.consumerSecret,
           token: oauthObj.token,
           token_secret: oauthObj.tokenSecret
-        }
+        };
+
         options.oauth = oauth;
         options.json = true;
+        options.baseUrl = BASE_URL;
 
-        console.log('request options: ', options);
+        //console.log('request options: ', options);sssss
 
         request(options, function(err, r, response){
 
@@ -185,14 +277,25 @@ Client.prototype = {
 
     var creds =
     {
-      'credentials': {
-        'credential': [{name: 'Banking Userid', value: username},
+      credentials: {
+        credential: [{name: 'Banking Userid', value: username},
           {name: 'Banking Password', value: password}]
       }
     };
 
-
     return creds;
+  },
+
+  buildChangeAccountTypeBody: function(accountType){
+
+    var body =
+    {
+      investmentAccount: {
+        investmentAccountType: '401K'
+      }
+    }
+
+    return body;
   }
 
 

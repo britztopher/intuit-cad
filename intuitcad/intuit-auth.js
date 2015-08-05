@@ -15,8 +15,7 @@ var OAUTH_TOKEN_TIMEOUT = 3600000;
 var IntuitAuth = function(authCreds){
   this.authCreds = authCreds;
   this.authCreds.privateKey = fs.readFileSync(authCreds.privateKeyPath, 'utf-8');
-  this.oauthInfo = {};
-  this.tokenTimeoutEnd = moment(Date.now()).add(60, 'minutes');
+  this.oauthInfo = null;
 
   //TODO - need to add this to config object
   this.writeAssertionFile = false;
@@ -30,19 +29,23 @@ IntuitAuth.prototype = {
 
       var assertionSigned64 = this.createSamlAssertion();
 
+    //if the token object already exists and its not expired (1 hour)  Might  be better to do this with response from
+    //oauth request rather then use our
+    if(this.oauthInfo && (this.oauthInfo.tokenExpireTime > Date.now())){
+      console.log('authinfo already exists so dont need to make saml request: ', this.oauthInfo);
+      deferred.resolve(this.oauthInfo);
+    }else{
+
+      console.log('need to get new oauth info: ');
       this.makeSamlRequest(assertionSigned64)
         .then(function(oauthObj){
-
-          //if the timeout in milliseconds
-          if(Date.now() < this.tokenTimeoutEnd && this.oauthInfo){
-
-          }
 
           deferred.resolve(oauthObj);
         },
         function(reason){
           console.log('could not make saml request because: ', reason);
         });
+    }
 
     return deferred.promise;
   },
@@ -172,8 +175,9 @@ IntuitAuth.prototype = {
   makeSamlRequest: function(message, callback){
 
     var deferred = q.defer();
-
     var oauth = {};
+
+    this.oauthInfo = oauth;
 
     //set the options for the saml request to get the oauth tokens
     var options = {
@@ -192,17 +196,14 @@ IntuitAuth.prototype = {
         console.log('could not send post request with assertion message because: \n', error);
         deferred.reject('request could not be completed because: '+ JSON.stringify(error));
       }
+
       console.log('made saml request', body);
-      var oauth = {};
       //split up the body
       var splitBodyArr = body.split('&');
       //populate oauth object
       oauth.tokenSecret = splitBodyArr[0].split('=')[1];
       oauth.token = splitBodyArr[1].split('=')[1];
-
-      //set these so we can check for time of token issued and if a token exists
-      this.tokenTimeoutEnd = moment(Date.now()).add(59, 'minutes');
-      this.oauthInfo = oauth;
+      oauth.tokenExpireTime = moment(Date.now()).add(59, 'minutes');
 
       //resolve with oauth infomation from
       deferred.resolve(oauth);
