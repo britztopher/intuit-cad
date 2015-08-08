@@ -1,6 +1,5 @@
 var q = require('q');
 var request = require('request');
-var async = require('async');
 
 var IntuitAuth = require('../intuitcad/intuit-auth');
 

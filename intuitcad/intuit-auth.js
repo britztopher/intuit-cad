@@ -1,6 +1,5 @@
 var request = require('request');
 var fs = require('fs');
-var saml2 = require('saml2-js');
 var swig = require('swig');
 var moment = require('moment');
 var crypto = require('crypto');
