@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "url" : "https://github.com/owner/project/issues",
+  "url": "https://github.com/owner/project/issues",
   "keywords": [
     "node",
     "intuit"
@@ -25,5 +25,16 @@
     "mocha": "^2.2.5",
     "nock": "^2.9.1",
     "supertest": "^1.0.1"
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/britztopher/intuit-cad.git"
+  },
+  "bugs": {
+    "url": "https://github.com/britztopher/intuit-cad/issues"
+  },
+  "homepage": "https://github.com/britztopher/intuit-cad"
 }
