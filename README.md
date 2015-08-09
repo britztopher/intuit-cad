@@ -50,6 +50,134 @@ if none of the environment variables are set it will take whatever you set it to
 >`consumerKey:process.env.INTUIT_CONSUMER_KEY || 'CONSUMERKEY'`
 
 it will use `CONSUMERKEY` as the value of `consumerKey`.
+##API Methods Available
+###institutions
+this returns all the institutions that Intuit CAD system supports (around 19,000 of them)
+#####usage
+```javascript
+client.institutions()
+  .then(function(institutions){
+    console.log('institutions: ', institutions);
+  },
+  function(reason){
+  	//reason for failure
+  });
+```
+
+###institutionDetails(institution_id)
+this returns a specific institutions details
+#####usage
+```javascript
+client.institutionDetails(100000)
+  .then(function(details){
+    console.log('DETAILS: ', details);
+  },
+  function(reason){
+  //reason for failure
+  });
+```
+
+###discoverAndAddAccounts(username, password, institution_id)
+method for discovering and adding a customer's account to Intuit's database for you to query against
+#####usage
+```javascript
+client.discoverAndAddAccounts('direct', 'blah', 100000)
+  .then(function(accounts){
+    console.log('DISCOVERED ACCOUNTS: ', accounts);
+  },
+  function(reason){
+    console.log('reason for failure was because: ', reason);
+  });
+```
+###getCustomerAccounts
+method for getting all the customer's accounts that was added in the `discoverAndAddAccounts` method.  This will use the `customerId` you specified when authenticating to get that customer's accounts i.e -  `customerId: '3'`
+#####usage
+```javascript
+client.getCustomerAccounts()
+  .then(function(accounts){
+  });
+```  
+
+###getLoginAccounts(institutionLoginId)
+returns all login accounts for a specific institution.  The institutionLoginId is returned with a call to `getCustomerAccounts` or any other method that returns account specific data
+#####usage
+```javascript
+client.getLoginAccounts(1284060126)
+  .then(function(loginAccounts){
+    console.log('login accounts: ', loginAccounts);
+  },
+  function(reason){
+    console.log('could not get login accounts because of: ', reason);
+  });
+```
+###getAccount(account_id)
+gets the details of a specific Account given the account ID  
+#####usage
+```javascript
+client.getAccount(400109423068)
+  .then(function(accountDetail){
+    console.log('GET CUSTOMER ACCOUNT DETAIL: ', accountDetail);
+  },
+  function(reason){
+    console.log('could not get account because of: ', reason);
+  });
+```
+###getAccountTransactions(accountId, txnStartDate, txnEndDate)
+returns the transactions for a specific accound between a start and end date given in the format `YYYY/MM/DD`
+#####usage
+```javascript
+client.getAccountTransactions(400109423068, '2015-07-01', '2015-07-29')
+  .then(function(transactions){
+    console.log('ACCOUNT TRANSACTIONS: ');
+  },
+  function(reason){
+    console.log('could not get transactions because of: ', reason);
+  });
+```
+###updateInstitutionLogin(institutionalLoginId, username, newPassword)
+method for updating the customer's password for a login account added by the `discoverAndAddAccounts` method listed above
+#####usage
+```javascript
+client.updateInstitutionLogin(1284060126, 'direct', 'newpassword')
+  .then(function(wasSuccess){
+    console.log('changed user passwords: ', wasSuccess);
+  },
+  function(reason){
+    console.log('could not update login accounts because of: ', reason);
+  });
+```
+###deleteAccount(account_id)
+deletes an account from a customer's account list from Intuit's database
+#####usage
+when used alone
+```javascript
+client.deleteAccount(accountId)
+  .then(function(){
+  console.log('deleted account');
+  },
+  function(reason){});
+```
+or chained with `getCustomerAccounts`
+```javascript
+client.getCustomerAccounts()
+  .then(function(accounts){
+    var deleteAccountId = accounts[0].accountId;
+    
+    client.deleteAccount(deleteAccountId)
+      .then(function(){
+        console.log('deleted account');
+      },
+      function(reason){});
+  })
+
+```
+
+##Coming Soon...Really soon
+####deleteCustomer
+deletes all customers from Intuit's database
+####updateAccountType(account_id)
+updates the account type of an account.  This is only used when the category of an account gets categorized automatically to 'other'
+####getInvestmentPositions
 
 ##Chaining Promise Methods
 Since all of the methods return a promise we can chain them like the documentation for [KrisKowal's Docs on Chaining Promises](https://github.com/kriskowal/q#chaining) There are a couple of API calls that require data from a previous call, like `deleteAccount` requires the `getCustomerAccount` to be called initially because we need an `accountId` for the account we want to delete. This is where chaining promises comes in handy.  If I were to implement the above example, where I need to get the `accountId` on a specific account I want to delete I need to first call:
@@ -111,5 +239,4 @@ client.getCustomerAccounts()
   })
 
 ```
-
 
