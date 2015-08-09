@@ -5,6 +5,7 @@ node package for obtaining building a SAML assertion message and making calls to
 ##Getting Started
 Using this library is quite simple.  
 Initial setup includes:
+
 1.  Install the Library - `npm install intuit-cad`
 2.  require it to your applicaiton - `var IntuitCad = require('intuit-cad');`
 3.  instantiate the client with your credentials - `var client = new IntuitCad(authCreds)`
@@ -12,6 +13,7 @@ Initial setup includes:
 Setting up configuration variables
 
 There are two ways to set your configuration for your authentication for intuit 
+
 	1. Environment variables - Recommended 
 	2. Manually set variables
 
