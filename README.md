@@ -17,33 +17,42 @@ There are two ways to set your configuration for your authentication for intuit
 	1. Environment variables - Recommended 
 	2. Manually set variables
 
-###Setting up Environment Variables 
-The recommended approach when using any library that requires passwords/tokens/private information to be used is to use environment variables.  Since most written code is version controlled either by Git or some other system, one would not want to save passwords in configuration files because the passwords are then saved to that repository's history.  These separate the need to maintain these passwords elsewhere.   For this library we need to set up four environment variables:
+Both ways are handled the same way for the instantiation of the module, however, evironment variables are safer and more secure.
 
+###Setting up Authentication Object 
+   >NOTE: The recommended approach when using any library that requires passwords/tokens/private information to be used is to use environment variables.  Since most written code is version controlled either by Git or some other system, one would not want to save passwords in configuration files because the passwords are then saved to that repository's history.  These separate the need to maintain these passwords elsewhere. 
 
-1.  `INTUIT_KEY_PASSPHRASE` - this is your passphrase for your private key
-2.  `INTUIT_ISSUER_ID` - This is going to be your Intuit's `SAML Identity Provider ID` found in on intuit's application console under your application
-3.  `INTUIT_CONSUMER_KEY` - the consumer key you were given by intuit CAD
-4.  `INTUIT_CONSUMER_SECRET` - the secret to your consumer key given by intuit CAD when you created your first application
+####Authentication Object
+In order for intuit to authenticate your SAML and OAuth API key we need to provide the OAuth server some information to verify we are able to use their CAD API.  We do this by building an authentication object and passing it to the constructor of the module (ie - `var client = new IntuitCad(authCredentials);`).  This authentication object is built with this information:
+```javascript
+var authCredentials ={
+  issuerId: process.env.INTUIT_ISSUER_ID || 'myIssuerId',
+  consumerKey:process.env.INTUIT_CONSUMER_KEY || 'CONSUMERKEY',
+  consumerSecret: process.env.INTUIT_CONSUMER_SECRET || 'CONSUMER_SECRET',
+  privateKeyPath: '/Users/britztopher/Documents/keys/comptest.key',
+  customerId: '3'
+};
+```
+>BEST PRACTICE: Use environment variables here to eliminate saving passwords and sensitive information to my Git repository. (ie - `process.env.INTUIT_ISSUER_ID` is used for environment variable `INTUIT_ISSUER_ID`);
 
-Here's an image of whats displayed after first creating your application with Intuit.  
+######issuerId
+the SAML Identity Provider ID 
+######consumerKey
+the key that is given to your Intuit account when signing up
+######consumerSecret
+the secret which is given to your Intuit account when signing up
+######privateKeyPath
+the path to your private key 
+######customerId
+this is a unique ID for each customer you plan on associating an Intuit account for.  This should be unique for every instantiation of the module, so each OAuth key is different for each customer.  
+>NOTE: do not use the same customerId for every request to CAD API. (ie - maybe use database primary key for customer)
+
+Below is an image of what information is provided by Intuit when you sign up and create your application.  This is found on your application's dashboard.
 
 ![](http://res.cloudinary.com/buddahbelly/image/upload/v1438950073/brilliantbritz/intuit-cad/intuit-cad-myapp.png)
 
 To set up environment variables on a Mac all you need to do is `export` them in a terminal shell.  For example, the command for doing so is:
 >`export INTUIT_CONSUMER_KEY=ConsumerKey`
-
-###Manually Set Variables
-If you are doing testing and not saving this to a repository, or just dont want to set up environment variables, you can set them manually and pass them as a `credential` object into the `intuit-cad` instantiation.  An example config object looks like so:
-
->`var authCredentials ={
-  issuerId: process.env.INTUIT_ISSUER_ID || 'nothing',
-  consumerKey:process.env.INTUIT_CONSUMER_KEY || 'CONSUMERKEY',
-  consumerSecret: process.env.INTUIT_CONSUMER_SECRET || 'CONSUMER_SECRET',
-  privateKeyPath: '/Users/chrisbritz/Documents/projects/compendium-advisor/comptest.key',
-  customerId: '3'
-};`
->
 
 if none of the environment variables are set it will take whatever you set it to.  For instance, in the line:
 
