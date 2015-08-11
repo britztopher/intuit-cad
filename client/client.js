@@ -8,6 +8,11 @@ var BASE_URL = 'https://financialdatafeed.platform.intuit.com/v1';
 
 var Client = function(authCreds){
 
+
+  if(typeof authCreds.customerId !== 'string'){
+    authCreds.customerId = authCreds.customerId.toString();
+  }
+
   this.authCreds = authCreds;
   this.intuitAuth = new IntuitAuth(authCreds);
 };
@@ -254,7 +259,7 @@ Client.prototype = {
         options.json = true;
         options.baseUrl = BASE_URL;
 
-        //console.log('request options: ', options);sssss
+        //console.log('request options: ', options);
 
         request(options, function(err, r, response){
 
