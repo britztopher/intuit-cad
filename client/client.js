@@ -1,24 +1,35 @@
 var q = require('q');
 var request = require('request');
+var fs = require('fs');
+var logger = require('winston');
 
 var IntuitAuth = require('../intuitcad/intuit-auth');
 
 var BASE_URL = 'https://financialdatafeed.platform.intuit.com/v1';
 
 
-var Client = function(authCreds){
+var Client = function(authCreds, options){
 
+  if(options){
+    logger.level = options.logLevel || 'info';
+  }
+
+  this.authCreds = authCreds;
 
   if(typeof authCreds.customerId !== 'string'){
     authCreds.customerId = authCreds.customerId.toString();
   }
 
-  this.authCreds = authCreds;
+  this.authCreds.privateKey = fs.readFileSync(authCreds.privateKeyPath, 'utf-8');
+
   this.intuitAuth = new IntuitAuth(authCreds);
 };
 
 Client.prototype = {
 
+  getOauthToken: function(){
+    return this.intuitAuth.getOauthObj();
+  },
   institutions: function(){
 
     var deferred = q.defer();
@@ -65,7 +76,7 @@ Client.prototype = {
         deferred.resolve(accounts);
       },
       function(reason){
-        console.log('could not get customer accounts because: ', reason);
+        logger.debug('intuit-cad::client::could not get customer accounts because: ', reason);
         deferred.reject(reason);
       });
 
@@ -122,7 +133,7 @@ Client.prototype = {
 
     var newCreds = this.buildCredentials(username, newPassword);
 
-    this.put('/logins/'+institutionalLoginId+'?refresh=true', newCreds)
+    this.put('/logins/' + institutionalLoginId + '?refresh=true', newCreds)
       .then(function(wasChanged){
         deferred.resolve(wasChanged);
       },
@@ -137,7 +148,6 @@ Client.prototype = {
     var deferred = q.defer();
 
 
-
     return deferred.promise;
 
   },
@@ -145,12 +155,12 @@ Client.prototype = {
   deleteAccount: function(accountId){
 
     var deferred = q.defer();
-    this.delete('/accounts/'+accountId)
+    this.delete('/accounts/' + accountId)
       .then(function(wasDeleted){
-        deferred.resolve('the account '+accountId+'was successfully deleted.');
+        deferred.resolve('the account ' + accountId + 'was successfully deleted.');
       },
       function(reason){
-        deferred.reject('the account '+accountId+'was not deleted successfully because: ', reason);
+        deferred.reject('the account ' + accountId + ' was not deleted successfully because: ', reason);
       });
 
     return deferred.promise;
@@ -238,14 +248,37 @@ Client.prototype = {
 
     return deferred.promise;
   },
+  oauthTokenCheck: function(){
+
+    var deferred = q.defer();
+
+    var oauthObj = this.getOauthToken();
+
+    //if the token object already exists and its not expired (1 hour)
+    if(oauthObj && (oauthObj.tokenExpireTime > Date.now())){
+      logger.debug('intuit-cad::client::authinfo already exists so dont need to make saml request: ', oauthObj);
+      deferred.resolve(oauthObj);
+    }else{
+      logger.debug('intuit-cad::client::need to get new oauth token');
+      this.intuitAuth.authenticate()
+        .then(function(oauthObj){
+          deferred.resolve(oauthObj);
+        });
+    }
+
+    return deferred.promise;
+
+  },
+
   makeRequest: function(options){
 
     //console.log('in make request');
     var deferred = q.defer();
     var authCreds = this.authCreds;
 
-    this.intuitAuth.authenticate()
+    this.oauthTokenCheck()
       .then(function(oauthObj){
+
 
         var oauth =
         {
@@ -259,19 +292,15 @@ Client.prototype = {
         options.json = true;
         options.baseUrl = BASE_URL;
 
-        //console.log('request options: ', options);
+        //logger.debug('request options: ', options);
 
         request(options, function(err, r, response){
 
           if(err)
-            console.log('error:', err);
+            logger.error('intuit-cad::client::error getting response from intuit cad because:', err);
 
           deferred.resolve(response)
         })
-      },
-      function(reason){
-        console.log('could not authenticate: ', reason);
-        deferred.reject(reason);
       });
 
     return deferred.promise;
