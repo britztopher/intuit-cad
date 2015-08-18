@@ -59,6 +59,23 @@ if none of the environment variables are set it will take whatever you set it to
 >`consumerKey:process.env.INTUIT_CONSUMER_KEY || 'CONSUMERKEY'`
 
 it will use `CONSUMERKEY` as the value of `consumerKey`.
+
+##Options
+There are a certain amount of options that are available.  Right now, the only one is setting the logging level. To use options, you can pass an options object as a argument in the instatiation of the `IntuitCad` object.
+
+####logLevel
+The `logLevel` option allows helps you debug your code by providing output from the `intuit-cad` library.  It has 3 levels: `info`, `debug`, and `error`.  
+
+#####Default Value:
+`info`
+
+######Example:
+```javascript
+...
+  var options = {logLevel: 'debug'};
+  
+  var client = new IntuitCad(authCredentials, options);
+```
 ##API Methods Available
 ###institutions
 this returns all the institutions that Intuit CAD system supports (around 19,000 of them)
