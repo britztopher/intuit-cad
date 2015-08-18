@@ -1,50 +1,54 @@
 var request = require('request');
-var fs = require('fs');
 var swig = require('swig');
 var moment = require('moment');
 var crypto = require('crypto');
 var uuid = require('node-uuid');
 var q = require('q');
+var logger = require('winston');
 
 //member vars
 var SAML_URL = 'https://oauth.intuit.com/oauth/v1/get_access_token_by_saml';
 var timeFormat = 'YYYY-MM-DD LZ';
 var OAUTH_TOKEN_TIMEOUT = 3600000;
 
-var IntuitAuth = function(authCreds){
-  this.authCreds = authCreds;
-  this.authCreds.privateKey = fs.readFileSync(authCreds.privateKeyPath, 'utf-8');
-  this.oauthInfo = null;
+var IntuitAuth = function(authCreds, options){
 
-  //TODO - need to add this to config object
-  this.writeAssertionFile = false;
+  if(options){
+    logger.level = options.logLevel || 'info';
+  }
+
+  this.authCreds = authCreds;
+
 };
 
 IntuitAuth.prototype = {
 
+  setOauthObj: function(oauthInfo){
+    this.oauthInfo = oauthInfo;
+  },
+  getOauthObj: function(){
+    return this.oauthInfo;
+  },
   authenticate: function(){
 
+    var self = this;
     var deferred = q.defer();
 
-      var assertionSigned64 = this.createSamlAssertion();
+    var assertionSigned64 = this.createSamlAssertion();
 
-    //if the token object already exists and its not expired (1 hour)  Might  be better to do this with response from
-    //oauth request rather then use our
-    if(this.oauthInfo && (this.oauthInfo.tokenExpireTime > Date.now())){
-      console.log('authinfo already exists so dont need to make saml request: ', this.oauthInfo);
-      deferred.resolve(this.oauthInfo);
-    }else{
+    this.makeSamlRequest(assertionSigned64)
+      .then(function(oauthObj){
+        //set the expire time 1 hour after we got it.  I use 58 just because i want to not wait until it expires to get
+        //a new token
+        oauthObj.tokenExpireTime = moment(Date.now()).add(58, 'minutes');
+        self.setOauthObj(oauthObj);
 
-      console.log('need to get new oauth info: ');
-      this.makeSamlRequest(assertionSigned64)
-        .then(function(oauthObj){
+        deferred.resolve(oauthObj);
+      },
+      function(reason){
+        deferred.reject('intuit-cad::intuit-auth::authenticate::'+reason);
+      });
 
-          deferred.resolve(oauthObj);
-        },
-        function(reason){
-          console.log('could not make saml request because: ', reason);
-        });
-    }
 
     return deferred.promise;
   },
@@ -164,7 +168,7 @@ IntuitAuth.prototype = {
     completeAssertion = new Buffer(completeAssertion).toString('base64');
 
 
-    console.log('finished saml assertion');
+    //logger.debug('intuit-cad::intuit-auth::finished saml assertion');
     return completeAssertion;
   },
   getAssertionSha: function(assertion){
@@ -175,8 +179,6 @@ IntuitAuth.prototype = {
 
     var deferred = q.defer();
     var oauth = {};
-
-    this.oauthInfo = oauth;
 
     //set the options for the saml request to get the oauth tokens
     var options = {
@@ -192,19 +194,25 @@ IntuitAuth.prototype = {
     //make the post request
     request.post(options, function(error, response, body){
       if(error){
-        console.log('could not send post request with assertion message because: \n', error);
-        deferred.reject('request could not be completed because: '+ JSON.stringify(error));
+        logger.debug('intuit-cad::intuit-auth::could not send post request with assertion message because: \n', error);
+        deferred.reject('intuit-cad::intuit-auth::request could not be completed because: ' + JSON.stringify(error));
       }
 
-      console.log('made saml request', body);
+      //logger.debug('intuit-cad::intuit-auth::made saml request', decodeURI(body));
+
+      if(body.indexOf('oauth_problem') == 1){
+        deferred.reject('intuit-cad::intuit-auth::cannot perform oauth token lookup because of SAML VALIDATION:\n' +
+          'ERROR::: ' + decodeURI(body));
+        logger.error('intuit-cad::intuit-auth::'+decodeURI(body));
+      }
+
       //split up the body
       var splitBodyArr = body.split('&');
       //populate oauth object
       oauth.tokenSecret = splitBodyArr[0].split('=')[1];
       oauth.token = splitBodyArr[1].split('=')[1];
-      oauth.tokenExpireTime = moment(Date.now()).add(59, 'minutes');
 
-      //resolve with oauth infomation from
+      //resolve with oauth information from
       deferred.resolve(oauth);
     });
 
