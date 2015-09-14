@@ -64,7 +64,7 @@ IntuitAuth.prototype = {
       '</saml2:Subject>' +
       '<saml2:Conditions NotBefore="{{notBefore}}" NotOnOrAfter="{{notOnOrAfter}}">' +
       '<saml2:AudienceRestriction>' +
-      '<saml2:Audience>mytestapp.191934.cc.dev-intuit.ipp.prod</saml2:Audience>' +
+      '<saml2:Audience>{{issuerId}}</saml2:Audience>' +
       '</saml2:AudienceRestriction>' +
       '</saml2:Conditions>' +
       '<saml2:AuthnStatement AuthnInstant="{{issueInstant}}" SessionIndex="_{{id}}">' +
@@ -232,5 +232,3 @@ IntuitAuth.prototype = {
 
 
 module.exports = IntuitAuth;
-
-
