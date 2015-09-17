@@ -11,7 +11,7 @@ var BASE_URL = 'https://financialdatafeed.platform.intuit.com/v1';
 var Client = function(authCreds, options){
 
   if(options){
-    logger.level = options.logLevel || 'info';
+    logger.level = options.loggerLevel || 'info';
   }
 
   this.authCreds = authCreds;
@@ -23,6 +23,8 @@ var Client = function(authCreds, options){
   this.authCreds.privateKey = fs.readFileSync(authCreds.privateKeyPath, 'utf-8');
 
   this.intuitAuth = new IntuitAuth(authCreds);
+
+
 };
 
 Client.prototype = {
@@ -35,8 +37,11 @@ Client.prototype = {
     var deferred = q.defer();
 
     this.get('/institutions')
-      .then(function(){
-
+      .then(function(institutions){
+        deferred.resolve(institutions);
+      },
+      function(reason){
+        deferred.reject(reason)
       });
 
     return deferred.promise;
@@ -147,6 +152,7 @@ Client.prototype = {
 
     var deferred = q.defer();
 
+    this.buildChangeAccountTypeBody(accountType);
 
     return deferred.promise;
 
@@ -164,6 +170,29 @@ Client.prototype = {
       });
 
     return deferred.promise;
+  },
+
+  deleteCustomer: function(){
+
+    var deferred = q.defer();
+    this.delete('/customers')
+      .then(function(){
+        logger.info('all customers have been deleted: fetching new oauth token');
+        //need to fetch new token bc if we use the same token it will recreate any customer we use it with
+        this.intuitAuth.authenticate(true)
+          .then(function(){
+            deferred.resolve(true);
+          },
+          function(reason){
+            deferred.reject(reason);
+          });
+      },
+      function(reason){
+        deferred.reject(reason);
+      })
+
+    return deferred.promise;
+
   },
   get: function(url, queryString){
 
@@ -262,7 +291,13 @@ Client.prototype = {
       logger.debug('intuit-cad::client::need to get new oauth token');
       this.intuitAuth.authenticate()
         .then(function(oauthObj){
+          logger.debug('intuit-cad::client::oauthTokenCheck::got oauth token resolving now');
           deferred.resolve(oauthObj);
+        },
+        function(reason){
+          var message ='intuit-cad::client::oauthTokenCheck::could not get new token because';
+          logger.debug(message, reason);
+          deferred.reject(reason)
         });
     }
 
@@ -278,7 +313,6 @@ Client.prototype = {
 
     this.oauthTokenCheck()
       .then(function(oauthObj){
-
 
         var oauth =
         {
@@ -324,7 +358,7 @@ Client.prototype = {
     var body =
     {
       investmentAccount: {
-        investmentAccountType: '401K'
+        investmentAccountType: accountType
       }
     }
 

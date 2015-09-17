@@ -38,11 +38,11 @@ IntuitAuth.prototype = {
 
     this.makeSamlRequest(assertionSigned64)
       .then(function(oauthObj){
+        logger.debug('Got oauth token from saml request', oauthObj)
         //set the expire time 1 hour after we got it.  I use 58 just because i want to not wait until it expires to get
         //a new token
         oauthObj.tokenExpireTime = moment(Date.now()).add(58, 'minutes');
         self.setOauthObj(oauthObj);
-
         deferred.resolve(oauthObj);
       },
       function(reason){
