@@ -200,9 +200,9 @@ This call deletes the currently authenticated customer.
 
 #####usage
 ```javascript
-client.deleteAccount(accountId)
+client.deleteCustomer()
   .then(function(){
-  console.log('deleted account');
+  console.log('deleted customer');
   },
   function(reason){});
 ```
