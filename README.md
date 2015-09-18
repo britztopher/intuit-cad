@@ -49,7 +49,7 @@ this is a unique ID for each customer you plan on associating an Intuit account 
 
 Below is an image of what information is provided by Intuit when you sign up and create your application.  This is found on your application's dashboard.
 
-{<2>}![](http://res.cloudinary.com/buddahbelly/image/upload/v1438950073/brilliantbritz/intuit-cad/intuit-cad-myapp.png)
+![](http://res.cloudinary.com/buddahbelly/image/upload/v1438950073/brilliantbritz/intuit-cad/intuit-cad-myapp.png)
 
 To set up environment variables on a Mac all you need to do is `export` them in a terminal shell.  For example, the command for doing so is:
 >`export INTUIT_CONSUMER_KEY=ConsumerKey`
@@ -186,7 +186,7 @@ or chained with `getCustomerAccounts`
 ```javascript
 client.getCustomerAccounts()
   .then(function(accounts){
-    return client.deleteCustomer(accounts.accounts[0].accountId)
+    return client.deleteAccount(accounts.accounts[0].accountId)
   })
   .then(function(response){
     console.log('done delete: ', response);
@@ -218,15 +218,14 @@ Since all of the methods return a promise we can chain them like the documentati
 ```javascript
 client.getCustomerAccounts()
   .then(function(accounts){
-  
-    var deleteAccountId = accounts[0].accountId;
-
-    client.deleteAccount(deleteAccountId)
-      .then(function(){
-        console.log('deleted account');
-      },
-      function(reason){});
+    return client.deleteAccount(accounts.accounts[0].accountId)
   })
+  .then(function(response){
+    console.log('done delete: ', response);
+  },
+  function(reason){
+    console.log('delete failure reason: ', reason);
+  });
 ```
 
 ##Example Usage
@@ -261,7 +260,7 @@ client.getAccount(400109423068)
 //Chainng function example.    
 client.getCustomerAccounts()
   .then(function(accounts){
-    return client.deleteCustomer(accounts.accounts[0].accountId)
+    return client.deleteAccount(accounts.accounts[0].accountId)
   })
   .then(function(response){
     console.log('done delete: ', response);
