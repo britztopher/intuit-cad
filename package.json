@@ -1,6 +1,6 @@
 {
   "name": "intuit-cad",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "description": "integration of intuit",
   "main": "./client/client.js",
   "scripts": {
