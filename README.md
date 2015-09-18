@@ -49,7 +49,7 @@ this is a unique ID for each customer you plan on associating an Intuit account 
 
 Below is an image of what information is provided by Intuit when you sign up and create your application.  This is found on your application's dashboard.
 
-![](http://res.cloudinary.com/buddahbelly/image/upload/v1438950073/brilliantbritz/intuit-cad/intuit-cad-myapp.png)
+{<2>}![](http://res.cloudinary.com/buddahbelly/image/upload/v1438950073/brilliantbritz/intuit-cad/intuit-cad-myapp.png)
 
 To set up environment variables on a Mac all you need to do is `export` them in a terminal shell.  For example, the command for doing so is:
 >`export INTUIT_CONSUMER_KEY=ConsumerKey`
@@ -73,7 +73,6 @@ The `logLevel` option allows helps you debug your code by providing output from 
 ```javascript
 ...
   var options = {logLevel: 'debug'};
-  
   var client = new IntuitCad(authCredentials, options);
 ```
 ##API Methods Available
@@ -187,20 +186,28 @@ or chained with `getCustomerAccounts`
 ```javascript
 client.getCustomerAccounts()
   .then(function(accounts){
-    var deleteAccountId = accounts[0].accountId;
-    
-    client.deleteAccount(deleteAccountId)
-      .then(function(){
-        console.log('deleted account');
-      },
-      function(reason){});
+    return client.deleteCustomer(accounts.accounts[0].accountId)
   })
+  .then(function(response){
+    console.log('done delete: ', response);
+  },
+  function(reason){
+    console.log('delete failure reason: ', reason);
+  });
+```
+###deleteCustomer()
+This call deletes the currently authenticated customer.
 
+#####usage
+```javascript
+client.deleteAccount(accountId)
+  .then(function(){
+  console.log('deleted account');
+  },
+  function(reason){});
 ```
 
 ##Coming Soon...Really soon
-####deleteCustomer
-deletes all customers from Intuit's database
 ####updateAccountType(account_id)
 updates the account type of an account.  This is only used when the category of an account gets categorized automatically to 'other'
 ####getInvestmentPositions
@@ -254,15 +261,15 @@ client.getAccount(400109423068)
 //Chainng function example.    
 client.getCustomerAccounts()
   .then(function(accounts){
-
-    var deleteAccountId = accounts[0].accountId;
-
-    client.deleteAccount(deleteAccountId)
-      .then(function(){
-        console.log('deleted account');
-      },
-      function(reason){});
+    return client.deleteCustomer(accounts.accounts[0].accountId)
   })
+  .then(function(response){
+    console.log('done delete: ', response);
+  },
+  function(reason){
+    console.log('delete failure reason: ', reason);
+  });
+
 
 ```
 

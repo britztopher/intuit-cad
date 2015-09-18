@@ -194,7 +194,7 @@ IntuitAuth.prototype = {
     //make the post request
     request.post(options, function(error, response, body){
       if(error){
-        logger.debug('intuit-cad::intuit-auth::could not send post request with assertion message because: \n', error);
+        logger.error('intuit-cad::intuit-auth::could not send post request with assertion message because: \n', error);
         deferred.reject('intuit-cad::intuit-auth::request could not be completed because: ' + JSON.stringify(error));
       }
 

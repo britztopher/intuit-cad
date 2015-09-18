@@ -11,7 +11,7 @@ var BASE_URL = 'https://financialdatafeed.platform.intuit.com/v1';
 var Client = function(authCreds, options){
 
   if(options){
-    logger.level = options.loggerLevel || 'info';
+    logger.level = options.logLevel || 'info';
   }
 
   this.authCreds = authCreds;
@@ -163,7 +163,7 @@ Client.prototype = {
     var deferred = q.defer();
     this.delete('/accounts/' + accountId)
       .then(function(wasDeleted){
-        deferred.resolve('the account ' + accountId + 'was successfully deleted.');
+        deferred.resolve('the account ' + accountId + ' was successfully deleted.');
       },
       function(reason){
         deferred.reject('the account ' + accountId + ' was not deleted successfully because: ', reason);
@@ -177,9 +177,9 @@ Client.prototype = {
     var deferred = q.defer();
     this.delete('/customers')
       .then(function(){
-        logger.info('all customers have been deleted: fetching new oauth token');
+        logger.info('been deleted: fetching new oauth token');
         //need to fetch new token bc if we use the same token it will recreate any customer we use it with
-        this.intuitAuth.authenticate(true)
+        this.intuitAuth.authenticate()
           .then(function(){
             deferred.resolve(true);
           },
@@ -285,7 +285,7 @@ Client.prototype = {
 
     //if the token object already exists and its not expired (1 hour)
     if(oauthObj && (oauthObj.tokenExpireTime > Date.now())){
-      logger.debug('intuit-cad::client::authinfo already exists so dont need to make saml request: ', oauthObj);
+      logger.debug('intuit-cad::client::authinfo already exists so dont need to make saml request: ');
       deferred.resolve(oauthObj);
     }else{
       logger.debug('intuit-cad::client::need to get new oauth token');
@@ -333,7 +333,8 @@ Client.prototype = {
           if(err)
             logger.error('intuit-cad::client::error getting response from intuit cad because:', err);
 
-          deferred.resolve(response)
+          logger.debug('GOT RESPONSE FOR ' + options.method + '\n::', response)
+          deferred.resolve(response);
         })
       });
 
