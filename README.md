@@ -73,7 +73,6 @@ The `logLevel` option allows helps you debug your code by providing output from 
 ```javascript
 ...
   var options = {logLevel: 'debug'};
-  
   var client = new IntuitCad(authCredentials, options);
 ```
 ##API Methods Available
@@ -187,20 +186,28 @@ or chained with `getCustomerAccounts`
 ```javascript
 client.getCustomerAccounts()
   .then(function(accounts){
-    var deleteAccountId = accounts[0].accountId;
-    
-    client.deleteAccount(deleteAccountId)
-      .then(function(){
-        console.log('deleted account');
-      },
-      function(reason){});
+    return client.deleteAccount(accounts.accounts[0].accountId)
   })
+  .then(function(response){
+    console.log('done delete: ', response);
+  },
+  function(reason){
+    console.log('delete failure reason: ', reason);
+  });
+```
+###deleteCustomer()
+This call deletes the currently authenticated customer.
 
+#####usage
+```javascript
+client.deleteAccount(accountId)
+  .then(function(){
+  console.log('deleted account');
+  },
+  function(reason){});
 ```
 
 ##Coming Soon...Really soon
-####deleteCustomer
-deletes all customers from Intuit's database
 ####updateAccountType(account_id)
 updates the account type of an account.  This is only used when the category of an account gets categorized automatically to 'other'
 ####getInvestmentPositions
@@ -211,15 +218,14 @@ Since all of the methods return a promise we can chain them like the documentati
 ```javascript
 client.getCustomerAccounts()
   .then(function(accounts){
-  
-    var deleteAccountId = accounts[0].accountId;
-
-    client.deleteAccount(deleteAccountId)
-      .then(function(){
-        console.log('deleted account');
-      },
-      function(reason){});
+    return client.deleteAccount(accounts.accounts[0].accountId)
   })
+  .then(function(response){
+    console.log('done delete: ', response);
+  },
+  function(reason){
+    console.log('delete failure reason: ', reason);
+  });
 ```
 
 ##Example Usage
@@ -254,15 +260,15 @@ client.getAccount(400109423068)
 //Chainng function example.    
 client.getCustomerAccounts()
   .then(function(accounts){
-
-    var deleteAccountId = accounts[0].accountId;
-
-    client.deleteAccount(deleteAccountId)
-      .then(function(){
-        console.log('deleted account');
-      },
-      function(reason){});
+    return client.deleteAccount(accounts.accounts[0].accountId)
   })
+  .then(function(response){
+    console.log('done delete: ', response);
+  },
+  function(reason){
+    console.log('delete failure reason: ', reason);
+  });
+
 
 ```
 
