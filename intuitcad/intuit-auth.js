@@ -175,7 +175,7 @@ IntuitAuth.prototype = {
     //create sha1 hash for assertion then base64 it
     return crypto.createHash('sha1').update(assertion).digest('base64').trim();
   },
-  makeSamlRequest: function(message, callback){
+  makeSamlRequest: function(message){
 
     var deferred = q.defer();
     var oauth = {};

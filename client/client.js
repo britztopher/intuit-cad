@@ -277,6 +277,7 @@ Client.prototype = {
 
     return deferred.promise;
   },
+  //TODO: check for token expiration, need to work on getting token saved in cooki
   oauthTokenCheck: function(){
 
     var deferred = q.defer();
@@ -311,7 +312,7 @@ Client.prototype = {
     var deferred = q.defer();
     var authCreds = this.authCreds;
 
-    this.oauthTokenCheck()
+    this.intuitAuth.authenticate()
       .then(function(oauthObj){
 
         var oauth =
@@ -326,16 +327,19 @@ Client.prototype = {
         options.json = true;
         options.baseUrl = BASE_URL;
 
-        //logger.debug('request options: ', options);
+        //console.log('request options: ', options);
 
         request(options, function(err, r, response){
 
           if(err)
-            logger.error('intuit-cad::client::error getting response from intuit cad because:', err);
+            console.log('error:', err);
 
-          logger.debug('GOT RESPONSE FOR ' + options.method + '\n::', response)
-          deferred.resolve(response);
+          deferred.resolve(response)
         })
+      },
+      function(reason){
+        console.log('could not authenticate: ', reason);
+        deferred.reject(reason);
       });
 
     return deferred.promise;
