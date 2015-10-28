@@ -1,5 +1,8 @@
 # intuit-cad
-node package for building a SAML assertion message and making calls to intuit's Customer Account Data (CAD) API.  Built with promises ([KrisKowal's Q Library](https://github.com/kriskowal/q)) in mind this makes implementing/chaining very easy and straightforward.   Written in pure javascript this makes extension of library easy and maintainable.  
+node package for building a SAML assertion message and making calls to intuit's Customer Account Data (CAD) API (Now
+known as the Financial Data API 'FAD').  Built with promises ([KrisKowal's Q Library](https://github.com/kriskowal/q))
+ in mind this makes implementing/chaining very easy and straightforward.   Written in pure javascript this makes
+ extension of library easy and maintainable.
 
 
 ##Getting Started
