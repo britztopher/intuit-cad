@@ -2,6 +2,7 @@ var q = require('q');
 var request = require('request');
 var fs = require('fs');
 var logger = require('winston');
+var _ = require('lodash');
 
 var IntuitAuth = require('../intuitcad/intuit-auth');
 
@@ -38,11 +39,11 @@ Client.prototype = {
 
     this.get('/institutions')
       .then(function(institutions){
-        deferred.resolve(institutions);
-      },
-      function(reason){
-        deferred.reject(reason)
-      });
+          deferred.resolve(institutions);
+        },
+        function(reason){
+          deferred.reject(reason)
+        });
 
     return deferred.promise;
   },
@@ -72,18 +73,34 @@ Client.prototype = {
     return deferred.promise;
   },
 
+  handleMfa: function (institutionId, challengeSessionId, challengeNodeId, answers) {
+    var extraHeaders = {
+      challengeSessionId: challengeSessionId,
+      challengeNodeId: challengeNodeId
+    };
+
+    var deferred = q.defer();
+
+    this.post('/institutions/' + institutionId + '/logins', answers, extraHeaders)
+      .then(function(response){
+        deferred.resolve(response);
+      });
+
+    return deferred.promise;
+  },
+
   getCustomerAccounts: function(){
 
     var deferred = q.defer();
 
     this.get('/accounts')
       .then(function(accounts){
-        deferred.resolve(accounts);
-      },
-      function(reason){
-        logger.debug('intuit-cad::client::could not get customer accounts because: ', reason);
-        deferred.reject(reason);
-      });
+          deferred.resolve(accounts);
+        },
+        function(reason){
+          logger.debug('intuit-cad::client::could not get customer accounts because: ', reason);
+          deferred.reject(reason);
+        });
 
     return deferred.promise;
   },
@@ -94,11 +111,11 @@ Client.prototype = {
 
     this.get('/logins/' + institutionLoginId + '/accounts')
       .then(function(loginAccounts){
-        deferred.resolve(loginAccounts);
-      },
-      function(reason){
-        deferred.reject(reason);
-      })
+          deferred.resolve(loginAccounts);
+        },
+        function(reason){
+          deferred.reject(reason);
+        })
 
     return deferred.promise;
   },
@@ -108,11 +125,11 @@ Client.prototype = {
 
     this.get('/accounts/' + accountId)
       .then(function(accountDetail){
-        deferred.resolve(accountDetail);
-      },
-      function(reason){
-        deferred.reject(reason);
-      });
+          deferred.resolve(accountDetail);
+        },
+        function(reason){
+          deferred.reject(reason);
+        });
 
     return deferred.promise;
 
@@ -124,11 +141,11 @@ Client.prototype = {
 
     this.get('/accounts/' + accountId + '/transactions/', txnDates)
       .then(function(transactions){
-        deferred.resolve(transactions);
-      },
-      function(reason){
-        deferred.reject(reason);
-      })
+          deferred.resolve(transactions);
+        },
+        function(reason){
+          deferred.reject(reason);
+        })
 
     return deferred.promise;
   },
@@ -140,11 +157,11 @@ Client.prototype = {
 
     this.put('/logins/' + institutionalLoginId + '?refresh=true', newCreds)
       .then(function(wasChanged){
-        deferred.resolve(wasChanged);
-      },
-      function(reason){
-        deferred.reject(reason);
-      });
+          deferred.resolve(wasChanged);
+        },
+        function(reason){
+          deferred.reject(reason);
+        });
 
     return deferred.promise;
   },
@@ -163,11 +180,11 @@ Client.prototype = {
     var deferred = q.defer();
     this.delete('/accounts/' + accountId)
       .then(function(wasDeleted){
-        deferred.resolve('the account ' + accountId + ' was successfully deleted.');
-      },
-      function(reason){
-        deferred.reject('the account ' + accountId + ' was not deleted successfully because: ', reason);
-      });
+          deferred.resolve('the account ' + accountId + ' was successfully deleted.');
+        },
+        function(reason){
+          deferred.reject('the account ' + accountId + ' was not deleted successfully because: ', reason);
+        });
 
     return deferred.promise;
   },
@@ -176,20 +193,9 @@ Client.prototype = {
 
     var deferred = q.defer();
     this.delete('/customers')
-      .then(function(){
-        logger.info('been deleted: fetching new oauth token');
-        //need to fetch new token bc if we use the same token it will recreate any customer we use it with
-        this.intuitAuth.authenticate()
-          .then(function(){
-            deferred.resolve(true);
-          },
-          function(reason){
-            deferred.reject(reason);
-          });
-      },
-      function(reason){
-        deferred.reject(reason);
-      })
+      .then(function (response) {
+        deferred.resolve(response);
+      });
 
     return deferred.promise;
 
@@ -207,33 +213,33 @@ Client.prototype = {
 
     this.makeRequest(options)
       .then(function(response){
-        deferred.resolve(response);
-      },
-      function(reason){
-        deferred.reject(reason);
-      });
+          deferred.resolve(response);
+        },
+        function(reason){
+          deferred.reject(reason);
+        });
 
     return deferred.promise;
 
   },
 
-  post: function(url, creds){
+  post: function(url, creds, extraHeaders){
 
     var deferred = q.defer();
 
     var options = {};
     options.url = url;
-    options.headers = {'Content-Type': 'application/json'};
+    options.headers = _.assign({'Content-Type': 'application/json'}, extraHeaders);
     options.body = creds;
     options.method = 'POST';
 
     this.makeRequest(options)
       .then(function(response){
-        deferred.resolve(response);
-      },
-      function(reason){
-        deferred.reject(reason);
-      });
+          deferred.resolve(response);
+        },
+        function(reason){
+          deferred.reject(reason);
+        });
 
     return deferred.promise;
   },
@@ -250,11 +256,11 @@ Client.prototype = {
 
     this.makeRequest(options)
       .then(function(response){
-        deferred.resolve(response);
-      },
-      function(reason){
-        deferred.reject(reason);
-      });
+          deferred.resolve(response);
+        },
+        function(reason){
+          deferred.reject(reason);
+        });
 
     return deferred.promise;
 
@@ -269,11 +275,11 @@ Client.prototype = {
 
     this.makeRequest(options)
       .then(function(){
-        deferred.resolve(true);
-      },
-      function(reason){
-        deferred.reject(reason);
-      });
+          deferred.resolve(true);
+        },
+        function(reason){
+          deferred.reject(reason);
+        });
 
     return deferred.promise;
   },
@@ -292,14 +298,14 @@ Client.prototype = {
       logger.debug('intuit-cad::client::need to get new oauth token');
       this.intuitAuth.authenticate()
         .then(function(oauthObj){
-          logger.debug('intuit-cad::client::oauthTokenCheck::got oauth token resolving now');
-          deferred.resolve(oauthObj);
-        },
-        function(reason){
-          var message ='intuit-cad::client::oauthTokenCheck::could not get new token because';
-          logger.debug(message, reason);
-          deferred.reject(reason)
-        });
+            logger.debug('intuit-cad::client::oauthTokenCheck::got oauth token resolving now');
+            deferred.resolve(oauthObj);
+          },
+          function(reason){
+            var message ='intuit-cad::client::oauthTokenCheck::could not get new token because';
+            logger.debug(message, reason);
+            deferred.reject(reason)
+          });
     }
 
     return deferred.promise;
@@ -315,32 +321,38 @@ Client.prototype = {
     this.intuitAuth.authenticate()
       .then(function(oauthObj){
 
-        var oauth =
-        {
-          consumer_key: authCreds.consumerKey,
-          consumer_secret: authCreds.consumerSecret,
-          token: oauthObj.token,
-          token_secret: oauthObj.tokenSecret
-        };
+          var oauth =
+          {
+            consumer_key: authCreds.consumerKey,
+            consumer_secret: authCreds.consumerSecret,
+            token: oauthObj.token,
+            token_secret: oauthObj.tokenSecret
+          };
 
-        options.oauth = oauth;
-        options.json = true;
-        options.baseUrl = BASE_URL;
+          options.oauth = oauth;
+          options.json = true;
+          options.baseUrl = BASE_URL;
 
-        //console.log('request options: ', options);
+          //console.log('request options: ', options);
 
-        request(options, function(err, r, response){
+          request(options, function(err, r, response){
 
-          if(err)
-            console.log('error:', err);
+            if(err)
+              console.log('error:', err);
 
-          deferred.resolve(response)
-        })
-      },
-      function(reason){
-        console.log('could not authenticate: ', reason);
-        deferred.reject(reason);
-      });
+            if (r.statusCode === 401 && response.challenge) {
+              var responseHeaders = r.headers;
+              response.challengeNodeId = responseHeaders.challengenodeid;
+              response.challengeSessionId = responseHeaders.challengesessionid;
+            }
+
+            deferred.resolve(response)
+          })
+        },
+        function(reason){
+          console.log('could not authenticate: ', reason);
+          deferred.reject(reason);
+        });
 
     return deferred.promise;
   },
