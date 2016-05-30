@@ -59,13 +59,11 @@ Client.prototype = {
 
     return deferred.promise;
   },
-  discoverAndAddAccounts: function(username, password, institutionId){
+  discoverAndAddAccounts: function(credentials, institutionId){
 
     var deferred = q.defer();
 
-    var creds = this.buildCredentials(username, password);
-
-    this.post('/institutions/' + institutionId + '/logins', creds)
+    this.post('/institutions/' + institutionId + '/logins', credentials)
       .then(function(response){
         deferred.resolve(response);
       });
