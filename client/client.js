@@ -82,6 +82,9 @@ Client.prototype = {
     this.post('/institutions/' + institutionId + '/logins', answers, extraHeaders)
       .then(function(response){
         deferred.resolve(response);
+      },
+      function(reason){
+        deferred.reject('Multi-Factor Authentication failed.  Message from Intuit: ' + reason);
       });
 
     return deferred.promise;
