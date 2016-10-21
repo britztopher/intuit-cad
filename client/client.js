@@ -84,9 +84,9 @@ Client.prototype = {
         deferred.resolve(response);
       },
       function(reason){
-        deferred.reject('Mult-Factor Authentication failed.  Message from Intuit: ', reason);
+        deferred.reject('Mult-Factor Authentication failed.  Message from Intuit: ' + reason);
       });
-  
+
     return deferred.promise;
   },
 
