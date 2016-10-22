@@ -1,5 +1,5 @@
 {
-  "name": "intuit-cad",
+  "name": "@earnest/intuit-cad",
   "version": "0.3.2",
   "description": "integration of intuit",
   "main": "./client/client.js",
